@@ -1,127 +1,83 @@
+class Driver:
+    """Водитель"""
+    def __init__(self, id, last_name, salary, park_id):
+        self.id = id
+        self.last_name = last_name
+        self.salary = salary
+        self.park_id = park_id
 
-class Computer:
-    """Класс 'Компьютер' - родительский класс"""
+class CarPark:
+    """Автопарк"""
     def __init__(self, id, name):
         self.id = id
         self.name = name
 
-class Program:
-    """Класс 'Программа' - дочерний класс (для связи один-ко-многим)"""
-    def __init__(self, id, name, size, computer_id):
-        self.id = id
-        self.name = name
-        self.size = size
-        self.computer_id = computer_id
+class DriverPark:
+    """Для реализации связи многие-ко-многим"""
+    def __init__(self, park_id, driver_id):
+        self.park_id = park_id
+        self.driver_id = driver_id
 
-class ComputerProgram:
-    """Класс 'Программы на компьютерах' (для связи многие-ко-многим)"""
-    def __init__(self, computer_id, program_id):
-        self.computer_id = computer_id
-        self.program_id = program_id
-
-computers = [
-    Computer(1, "Ноутбук Dell"),
-    Computer(2, "Рабочая станция HP"),
-    Computer(3, "Сервер IBM"),
-    Computer(4, "Альфа-сервер"),
-    Computer(5, "Арендованный ПК")
+# Данные Автопарков
+parks = [
+    CarPark(1, 'Центральный парк'),
+    CarPark(2, 'Западное депо'),
+    CarPark(3, 'ТрансЛогистик'),
 ]
 
-programs = [
-    Program(1, "Photoshop", 2048, 1),
-    Program(2, "Microsoft Office", 4096, 1),
-    Program(3, "AutoCAD", 3072, 2),
-    Program(4, "Visual Studio", 5120, 2),
-    Program(5, "MySQL Server", 1024, 3),
-    Program(6, "Apache", 512, 3),
-    Program(7, "Антивирус Касперского", 256, 4),
-    Program(8, "Аудиоредактор", 1024, 5)
+# Данные Водителей
+drivers = [
+    Driver(1, 'Иванов', 50000, 1),
+    Driver(2, 'Петров', 65000, 2),
+    Driver(3, 'Сидоров', 45000, 1),
+    Driver(4, 'Кузнецов', 70000, 3),
+    Driver(5, 'Волков', 55000, 3),
 ]
 
-computer_programs = [
-    ComputerProgram(1, 1),  # Ноутбук Dell -> Photoshop
-    ComputerProgram(1, 2),  # Ноутбук Dell -> Microsoft Office
-    ComputerProgram(2, 3),  # Рабочая станция HP -> AutoCAD
-    ComputerProgram(2, 4),  # Рабочая станция HP -> Visual Studio
-    ComputerProgram(3, 5),  # Сервер IBM -> MySQL Server
-    ComputerProgram(3, 6),  # Сервер IBM -> Apache
-    ComputerProgram(4, 7),  # Альфа-сервер -> Антивирус Касперского
-    ComputerProgram(4, 3),  # Альфа-сервер -> AutoCAD
-    ComputerProgram(5, 8),  # Арендованный ПК -> Аудиоредактор
-    ComputerProgram(5, 2),  # Арендованный ПК -> Microsoft Office
+# Связи многие-ко-многим
+drivers_parks = [
+    DriverPark(1, 1),
+    DriverPark(1, 2),
+    DriverPark(2, 2),
+    DriverPark(3, 3),
+    DriverPark(3, 4),
+    DriverPark(3, 5),
 ]
 
-print("=== ЗАПРОС 1 ===")
-print("Список программ, у которых название заканчивается на 'e', и названия их компьютеров:\n")
+def main():
+    one_to_many = [(d.last_name, d.salary, p.name) 
+                   for p in parks 
+                   for d in drivers 
+                   if d.park_id == p.id]
 
-programs_ending_with_ov = [
-    (program.name, next((comp.name for comp in computers if comp.id == program.computer_id), "Неизвестный компьютер"))
-    for program in programs 
-    if program.name.endswith('e')
-]
-
-for program_name, computer_name in programs_ending_with_ov:
-    print(f"Программа: {program_name}, Компьютер: {computer_name}")
-
-print("\n=== ЗАПРОС 2 ===")
-print("Список компьютеров со средним размером программ на каждом компьютере:\n")
-
-computer_stats = {}
-
-for program in programs:
-    if program.computer_id not in computer_stats:
-        computer_stats[program.computer_id] = {'total_size': 0, 'count': 0}
-    computer_stats[program.computer_id]['total_size'] += program.size
-    computer_stats[program.computer_id]['count'] += 1
-
-computer_avg_sizes = []
-for comp_id, stats in computer_stats.items():
-    computer = next((c for c in computers if c.id == comp_id), None)
-    if computer and stats['count'] > 0:
-        avg_size = stats['total_size'] / stats['count']
-        computer_avg_sizes.append((computer.name, avg_size))
-
-computer_avg_sizes.sort(key=lambda x: x[1])
-
-for computer_name, avg_size in computer_avg_sizes:
-    print(f"Компьютер: {computer_name}, Средний размер программ: {avg_size:.2f} МБ")
-
-print("\n=== ЗАПРОС 3 ===")
-print("Список всех компьютеров, у которых название начинается с буквы 'А', и список работающих на них программ:\n")
-
-computers_starting_with_a = [comp for comp in computers if comp.name.startswith('А')]
-
-for computer in computers_starting_with_a:  # Находим ID программ, связанных с этим компьютером (многие-ко-многим)
-  
-    program_ids = [
-        cp.program_id for cp in computer_programs 
-        if cp.computer_id == computer.id
-    ]
+    many_to_many_temp = [(p.name, dp.park_id, dp.driver_id) 
+                         for p in parks 
+                         for dp in drivers_parks 
+                         if p.id == dp.park_id]
     
+    many_to_many = [(d.last_name, park_name) 
+                    for park_name, park_id, driver_id in many_to_many_temp 
+                    for d in drivers if d.id == driver_id]
 
-    program_names = [     # Находим названия этих программ
-        program.name for program in programs 
-        if program.id in program_ids
-    ]
+    print('\nЗапрос 1: Список всех связанных водителей и автопарков (сортировка по водителю)')
+    res1 = sorted(one_to_many, key=lambda x: x[0])
+    for item in res1:
+        print(f'Водитель: {item[0]}, Автопарк: {item[2]}')
+
+    print('\nЗапрос 2: Список автопарков с количеством водителей (сортировка по количеству)')
+    res2 = []
+    for p in parks:
+        p_drivers = list(filter(lambda x: x[2] == p.name, one_to_many))
+        res2.append((p.name, len(p_drivers)))
     
-    print(f"Компьютер: {computer.name}")
-    print(f"  Установленные программы: {', '.join(program_names) if program_names else 'Нет программ'}")
-    print()
+    res2.sort(key=lambda x: x[1], reverse=True)
+    for item in res2:
+        print(f'Автопарк: {item[0]}, Кол-во водителей: {item[1]}')
 
+    print('\nЗапрос 3: Водители с фамилией на "ов" и их автопарки (многие-ко-многим)')
+    res3 = [item for item in many_to_many if item[0].endswith('ov') or item[0].endswith('ов')]
+    for item in res3:
+        print(f'Водитель: {item[0]}, Автопарк: {item[1]}')
 
-print("=" * 60)
-print("ИСХОДНЫЕ ДАННЫЕ ДЛЯ ПРОВЕРКИ:")
-print("\nКомпьютеры:")
-for comp in computers:
-    print(f"  ID: {comp.id}, Название: {comp.name}")
-
-print("\nПрограммы (связь один-ко-многим):")
-for prog in programs:
-    computer_name = next((c.name for c in computers if c.id == prog.computer_id), "Неизвестно")
-    print(f"  ID: {prog.id}, Название: {prog.name}, Размер: {prog.size} МБ, Компьютер: {computer_name}")
-
-print("\nСвязи многие-ко-многим (установки программ):")
-for cp in computer_programs:
-    comp_name = next((c.name for c in computers if c.id == cp.computer_id), "Неизвестно")
-    prog_name = next((p.name for p in programs if p.id == cp.program_id), "Неизвестно")
-    print(f"  Компьютер: {comp_name} -> Программа: {prog_name}")
+if __name__ == '__main__':
+    main()
